@@ -1,5 +1,5 @@
-# Ignore R files since we're working on Python
-.R
+# Ignore python files since we're working on R
+*.py
 
 # Ignore Remote FTP config file
 .ftpconfig
