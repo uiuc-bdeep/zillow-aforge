@@ -72,7 +72,6 @@ for (state in abbr) {
     # Change directory to where you've stored ZTRAX
     # dir <- paste0(DB_path,"DB", state_code) #"DB17"
     dir <- paste0(DB_path, state_code) #"DB17"
-
     if (!file.exists(dir)) {
       print(paste("no folder for DB", toString(state_code), "found for ", state))
       missing_states <- c(missing_states, state)

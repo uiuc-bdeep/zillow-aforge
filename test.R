@@ -1,5 +1,8 @@
+
+#### test file for sparkr. this code only handles a small state of AK.
+
 library(SparkR)
-Sys.setenv("SPARKR_SUBMIT_ARGS"="--master yarn-client sparkr-shell")
+# Sys.setenv("SPARKR_SUBMIT_ARGS"="--master yarn-client sparkr-shell")
 
 rm(list=ls())
 PkgTest <- function(x) {
@@ -15,15 +18,14 @@ PkgTest <- function(x) {
 packages <- c("readxl", "data.table", "rgdal", "sp")
 lapply(packages, PkgTest)
 
-
-
 sparkR.session(ter = "local[*]", sparkConfig = list(spark.driver.memory = "4g"))
 # setLogLevel("ERROR")
 
 dir <- "/gpfs01/hadoop/user/cng10/Erick/zillow/stores/"
 dir2 <- paste(dir, "02/", sep = "")
 
-layoutZAsmt <- read_excel(file.path(dir, 'Layout.xlsx'), sheet = 1) #("../stores/", 'Layout.xlsx'), sheet = 1)
+#("../stores/", 'Layout.xlsx'), sheet = 1)
+layoutZAsmt <- read_excel(file.path(dir, 'Layout.xlsx'), sheet = 1)
 layoutZTrans <- read_excel(file.path(dir, 'Layout.xlsx'), sheet = 2, col_types = c("text", "text", "numeric", "text", "text"))
 
 print("finished loading layout")
@@ -59,5 +61,27 @@ print("finished reading table")
 base1 <- as.DataFrame(base)
 
 print("finished converting dataframe")
+
+## select the useful cols
+base1 <- select(base1, list("RowID", "ImportParcelID", "LoadID", "FIPS", "State", "County",
+                            "PropertyFullStreetAddress", "PropertyHouseNumber",
+                            "PropertyHouseNumberExt", "PropertyStreetPreDirectional",
+                            "PropertyStreetName", "PropertyStreetSuffix", "PropertyStreetPostDirectional",
+                            "PropertyCity", "PropertyState", "PropertyZip",
+                            "PropertyBuildingNumber", "PropertyAddressUnitDesignator", "PropertyAddressUnitNumber",
+                            "PropertyAddressLatitude", "PropertyAddressLongitude", "PropertyAddressCensusTractAndBlock",
+                            "NoOfBuildings", "LotSizeAcres", "LotSizeSquareFeet", "TaxAmount", "TaxYear"))
+
+##### TODO: convert this part into SparkR style.
+    if (length(unique(base$ImportParcelID)) != dim(base)[1] ) {
+      #Example: Print all entries for parcels with at least two records.
+      base[ImportParcelID %in% base[duplicated(ImportParcelID), ImportParcelID], ][order(ImportParcelID)]
+
+      setkeyv(base, c("ImportParcelID", "LoadID"))  # Sets the index and also orders by ImportParcelID, then LoadID increasing
+      keepRows <- base[ , .I[.N], by = c("ImportParcelID")]   # Creates a table where the 1st column is ImportParcelID and the second column
+      # gives the row number of the last row that ImportParcelID appears.
+      base <- base[keepRows[[2]], ] # Keeps only those rows identified in previous step
+    }
+
 
 print("hello, world.")
